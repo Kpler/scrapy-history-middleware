@@ -1,22 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, unicode_literals
-try:
-    from setuptools import setup
-except ImportError:
-    from distutils import setup
+
+from setuptools import setup
 
 import history
 
 
-packages = [
-    'history',
-]
-
-requires = [
-    'scrapy',
-    'boto',
-    'parsedatetime',
+install_requires = [
+    'boto==2.47.0',
+    'parsedatetime==1.4',
+    'Scrapy==1.5.0',
 ]
 
 setup(
@@ -26,14 +20,6 @@ setup(
     author='Andrew Preston',
     author_email='andrew@preston.co.nz',
     url='http://github.com/Kpler/scrapy-history-middleware',
-    packages=packages,
-    install_requires=requires,
-    classifiers=(
-        'Development Status :: 4 - Beta'
-        'Intended Audience :: Developers',
-        'Natural Language :: English',
-        'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-    ),
+    packages=['history'],
+    install_requires=install_requires,
 )

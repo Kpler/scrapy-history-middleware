@@ -183,9 +183,7 @@ class S3CacheStorage(object):
         if data.get('binary', False):
             logger.debug('retrieved binary body')
             response_body = base64.b64decode(response_body.decode('utf8'))
-            encoding = {}
-        else:
-            encoding = {'encoding': 'utf8'}
+
         url = str(metadata['response_url'])
         status = metadata.get('status')
         Response = responsetypes.from_args(headers=response_headers, url=url)
@@ -194,7 +192,7 @@ class S3CacheStorage(object):
                         headers=response_headers,
                         status=status,
                         body=response_body,
-                        **encoding)
+                        )
 
     def store_response(self, spider, request, response):
         """Store the given response in the cache.
@@ -220,7 +218,7 @@ class S3CacheStorage(object):
             'response_body': response_body
         }
 
-        data_string = json.dumps(data, ensure_ascii=False, encoding='utf-8')
+        data_string = json.dumps(data, ensure_ascii=False)
         # sometimes can cause memory error in SH if too big
         logger.debug('request/response object size: {} kB'.format(len(data_string) / 1024))
         # With versioning enabled creating a new s3_key is not
