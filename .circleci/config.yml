@@ -1,0 +1,91 @@
+---
+version: 2
+jobs:
+  ##
+  # Build
+  ##
+  build:
+    working_directory: ~/scrapy-history-middleware
+    docker:
+    - image: circleci/python:3.6.1
+    environment:
+      VENV_MODULE: venv
+
+    steps:
+    # Mandatory step to check out source code to the working directory
+    - checkout
+
+    # Restore venv from previous builds
+    # - restore_cache:
+    #     key: v2-scrapy-history-middleware-venv-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "dev-requirements.txt" }}
+
+    - run:
+        name: Check and install venv, pip and other dependencies
+        command: |
+          if [ ! -d  ~/scrapy-history-middleware/.venv ]
+          then
+            python3 -m ${VENV_MODULE} .venv
+            source ./.venv/bin/activate
+            pip install --upgrade pip==10.0.1
+            pip install --upgrade -r dev-requirements.txt
+            pyenv local 2.7.12 3.6.1
+          fi
+
+    # Save cache of working directory for next jobs (within current build), the .Revision changes each commit
+    - save_cache:
+        key: v2-scrapy-history-middleware-wcpy-{{ .Revision }}
+        paths:
+        - ~/scrapy-history-middleware
+
+     # Save cache of venv so it may be used by future builds and tests if needed (across builds)
+    # - save_cache:
+    #     key: v2-scrapy-history-middleware-venv-{{ .Branch }}-{{ checksum "requirements.txt" }}-{{ checksum "dev-requirements.txt" }}
+    #     paths:
+    #     - .venv
+
+
+  ##
+  # Test
+  ##
+  test:
+    working_directory: ~/scrapy-history-middleware
+    docker:
+    - image: circleci/python:3.6.1
+      environment:
+        CIRCLE_ARTIFACTS: /tmp/circleci-artifacts
+
+    steps:
+    # Restore the working directory
+    - restore_cache:
+        key: v2-scrapy-history-middleware-wcpy-{{ .Revision }}
+
+    # Testing steps
+    - run:
+        name: Initialize directories to store test reports
+        command: mkdir -p $CIRCLE_ARTIFACTS/flake8
+
+    - run:
+        name: Activate venv
+        command: echo 'source ./.venv/bin/activate' >> $BASH_ENV
+
+    - run:
+        name: Lint modified files
+        command: git diff master -- '*.py' | flake8 --diff --output-file=$CIRCLE_ARTIFACTS/flake8/report.txt history/
+
+    - run:
+        name: Running tox
+        command: tox
+        
+    # Save test reports as artifacts
+    - store_artifacts:
+        path: /tmp/circleci-artifacts
+
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+    - build
+    - test:
+        requires:
+        - build
